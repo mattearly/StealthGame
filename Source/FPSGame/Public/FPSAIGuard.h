@@ -3,15 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "FPSAIGuard.generated.h"
 
+class UPawnSensingComponent;
+
 UCLASS()
-class FPSGAME_API AFPSAIGuard : public AActor
+class FPSGAME_API AFPSAIGuard : public ACharacter
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AFPSAIGuard();
 
@@ -19,10 +21,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+		UPawnSensingComponent * PawnSensingComp;
+
+	UFUNCTION()
+		void OnPawnSeen(APawn *SeenPawn);
+
+
+	UFUNCTION()
+		void OnNoiseHeard(APawn* HeardPawn, const FVector& Location, float Volume);
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
-	
 };
