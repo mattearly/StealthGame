@@ -37,6 +37,14 @@ void AFPSAIGuard::OnNoiseHeard(APawn * HeardPawn, const FVector & Location, floa
 {
 	DrawDebugSphere(GetWorld(), Location, 32.0f, 12, FColor::Green, false, 10.0f);
 
+	FVector Direction = Location - GetActorLocation();
+	Direction.Normalize();
+
+	FRotator NewLookAt = FRotationMatrix::MakeFromX(Direction).Rotator();
+	NewLookAt.Pitch = 0.0f;
+	NewLookAt.Roll = 0.0f;
+
+	SetActorRotation(NewLookAt);
 }
 
 
@@ -44,8 +52,4 @@ void AFPSAIGuard::OnNoiseHeard(APawn * HeardPawn, const FVector & Location, floa
 void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
-
-
-
