@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "FPSGameMode.h"
+#include "AI/Navigation/NavigationSystem.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -27,6 +28,10 @@ void AFPSAIGuard::BeginPlay()
 
 	OriginalRotation = GetActorRotation();
 
+	if (bPatrol) {
+		MoveToNextPatrolPoint();
+	}
+
 }
 
 void AFPSAIGuard::OnPawnSeen(APawn * SeenPawn)
@@ -42,8 +47,12 @@ void AFPSAIGuard::OnPawnSeen(APawn * SeenPawn)
 		GM->CompleteMission(SeenPawn, false);
 	}
 
-	if (GuardState != EAIState::Alerted) {
-		SetGuardState(EAIState::Suspicious);
+	SetGuardState(EAIState::Alerted);
+
+	// Stop Movement if Patrolling
+	AController *Controller = GetController();
+	if (Controller) {
+		Controller->StopMovement();
 	}
 }
 
@@ -69,12 +78,27 @@ void AFPSAIGuard::OnNoiseHeard(APawn * HeardPawn, const FVector & Location, floa
 	GetWorldTimerManager().ClearTimer(TimerHandle_ResetOrientation);
 
 	GetWorldTimerManager().SetTimer(TimerHandle_ResetOrientation, this, &AFPSAIGuard::ResetOrientation, 3.0f);
+
+	SetGuardState(EAIState::Suspicious);
+
+	// stop movement if patrolling
+	AController *Controller = GetController();
+	if (Controller) {
+		Controller->StopMovement();
+	}
 }
 
 void AFPSAIGuard::ResetOrientation()
 {
 	if (GuardState == EAIState::Alerted) { return; }
+
 	SetActorRotation(OriginalRotation);
+
+	SetGuardState(EAIState::Idle);
+
+	if (bPatrol) {
+		MoveToNextPatrolPoint();
+	}
 }
 
 
@@ -87,8 +111,30 @@ void AFPSAIGuard::SetGuardState(EAIState NewState)
 }
 
 
+void AFPSAIGuard::MoveToNextPatrolPoint()
+{
+	if (CurrentPatrolPoint == nullptr || CurrentPatrolPoint == SecondPatrolPoint) {
+		CurrentPatrolPoint = FirstPatrolPoint;
+	}
+	else {
+		CurrentPatrolPoint = SecondPatrolPoint;
+	}
+
+	UNavigationSystem::SimpleMoveToActor(GetController(), CurrentPatrolPoint);
+}
+
 // Called every frame
 void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (CurrentPatrolPoint) {
+		FVector Delta = GetActorLocation() - CurrentPatrolPoint->GetActorLocation();
+		float DistanceToGoal = Delta.Size();
+
+		if (DistanceToGoal < 70) {
+			MoveToNextPatrolPoint();
+		}
+
+	}
 }

@@ -51,8 +51,28 @@ protected:
 	UFUNCTION()
 		void SetGuardState(EAIState NewState);
 
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "AI")
 		void OnStateChanged(EAIState NewState);
+
+
+	/* Patrolling Guards System */
+
+	UPROPERTY(EditInstanceOnly, Category = "AI")
+		bool bPatrol;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI", meta = (EditCondition = "bPatrol"))
+		AActor *FirstPatrolPoint;	
+	
+	UPROPERTY(EditInstanceOnly, Category = "AI", meta = (EditCondition = "bPatrol"))
+		AActor *SecondPatrolPoint;
+
+	AActor* CurrentPatrolPoint;
+
+	void MoveToNextPatrolPoint();
+
+	/* End Patrolling Guards System */
+
 
 public:
 	// Called every frame
